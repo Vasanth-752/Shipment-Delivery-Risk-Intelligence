@@ -6,13 +6,11 @@ import { AlertTriangle, ArrowRight, ShieldAlert, Package, Clock, ExternalLink } 
 interface DashboardScreenProps {
   onSelectShipment: (id: string) => void;
   onNavigateToList: (filterTier?: string) => void;
-  onAddNewShipment: () => void;
 }
 
 export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onSelectShipment,
   onNavigateToList,
-  onAddNewShipment,
 }) => {
   const [summary, setSummary] = useState<{
     counts: { total: number; low: number; medium: number; high: number; critical: number };
@@ -82,16 +80,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         </div>
         <div className="flex items-center gap-3">
           <button
-            id="quick-add-shipment-btn"
-            onClick={onAddNewShipment}
-            className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-md hover:bg-slate-800 transition-colors"
-          >
-            + Register Shipment
-          </button>
-          <button
             id="view-all-shipments-btn"
             onClick={() => onNavigateToList()}
-            className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-md hover:bg-slate-800 transition-colors flex items-center gap-1.5"
           >
             <span>All Shipments</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -221,9 +212,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                     {s.customerName}
                   </td>
                   <td className="px-6 py-3.5 text-slate-600">
-                    <span className="font-medium text-slate-700">{s.origin?.city || s.origin?.name}</span>
+                    <span className="font-medium text-slate-700">
+                      {s.origin?.city || s.origin?.name}
+                      {s.origin?.state ? `, ${s.origin.state}` : ''}
+                    </span>
                     <span className="mx-1 text-slate-400">→</span>
-                    <span className="font-medium text-slate-700">{s.destination?.city || s.destination?.name}</span>
+                    <span className="font-medium text-slate-700">
+                      {s.destination?.city || s.destination?.name}
+                      {s.destination?.state ? `, ${s.destination.state}` : ''}
+                    </span>
                   </td>
                   <td className="px-6 py-3.5 uppercase tracking-wide text-slate-600 font-medium">
                     {s.mode}

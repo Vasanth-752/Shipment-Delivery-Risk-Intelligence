@@ -2,9 +2,7 @@ import { useState } from 'react';
 import { DashboardScreen } from './screens/DashboardScreen.js';
 import { ShipmentListScreen } from './screens/ShipmentListScreen.js';
 import { ShipmentDetailScreen } from './screens/ShipmentDetailScreen.js';
-import { ShipmentForm, ShipmentFormData } from './components/ShipmentForm.js';
-import { api } from './api/client.js';
-import { ShieldCheck, LayoutDashboard, ListFilter, Plus } from 'lucide-react';
+import { ShieldCheck, LayoutDashboard, ListFilter } from 'lucide-react';
 
 type Screen = 'dashboard' | 'list' | 'detail';
 
@@ -12,10 +10,6 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('dashboard');
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
   const [listFilterTier, setListFilterTier] = useState<string>('all');
-
-  // Quick Register Modal state
-  const [isQuickCreateOpen, setIsQuickCreateOpen] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
 
   const handleSelectShipment = (id: string) => {
     setSelectedShipmentId(id);
@@ -29,23 +23,6 @@ export default function App() {
       setListFilterTier('all');
     }
     setCurrentScreen('list');
-  };
-
-  const handleQuickCreateSubmit = async (data: ShipmentFormData) => {
-    setIsCreating(true);
-    try {
-      const res = await api.createShipment(data);
-      setIsQuickCreateOpen(false);
-      // Navigate to detail of newly created shipment to show immediate scoring and prediction
-      if (res.shipment?.id) {
-        setSelectedShipmentId(res.shipment.id);
-        setCurrentScreen('detail');
-      } else {
-        setCurrentScreen('list');
-      }
-    } finally {
-      setIsCreating(false);
-    }
   };
 
   return (
@@ -67,7 +44,7 @@ export default function App() {
                   Risk Intelligence Platform
                 </span>
                 <span className="text-[10px] uppercase font-semibold tracking-wider text-slate-400 block leading-tight">
-                  Supply Chain & Logistics MVP
+                  Supply Chain & Logistics Monitoring
                 </span>
               </div>
             </div>
@@ -106,14 +83,9 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              id="header-create-shipment-btn"
-              onClick={() => setIsQuickCreateOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-md hover:bg-slate-800 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>New Shipment</span>
-            </button>
+            <span className="text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md">
+              Live Monitoring Mode
+            </span>
           </div>
         </div>
       </header>
@@ -124,7 +96,6 @@ export default function App() {
           <DashboardScreen
             onSelectShipment={handleSelectShipment}
             onNavigateToList={handleNavigateToList}
-            onAddNewShipment={() => setIsQuickCreateOpen(true)}
           />
         )}
 
@@ -142,15 +113,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Shared Quick Create Form Modal */}
-      {isQuickCreateOpen && (
-        <ShipmentForm
-          onSubmit={handleQuickCreateSubmit}
-          onCancel={() => setIsQuickCreateOpen(false)}
-          isSubmitting={isCreating}
-        />
-      )}
     </div>
   );
 }

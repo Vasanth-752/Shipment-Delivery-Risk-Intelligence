@@ -182,8 +182,13 @@ export const ShipmentDetailScreen: React.FC<ShipmentDetailScreenProps> = ({
             <span>Origin</span>
           </div>
           <p className="text-sm font-bold text-slate-900">{shipment.origin?.name}</p>
-          <p className="text-slate-500">
-            {[shipment.origin?.city, shipment.origin?.country].filter(Boolean).join(', ')}
+          <p className="text-slate-600 font-medium">
+            {[
+              shipment.origin?.city,
+              shipment.origin?.state,
+              shipment.origin?.pincode ? `PIN: ${shipment.origin.pincode}` : '',
+              shipment.origin?.country
+            ].filter(Boolean).join(', ')}
           </p>
         </div>
 
@@ -193,8 +198,13 @@ export const ShipmentDetailScreen: React.FC<ShipmentDetailScreenProps> = ({
             <span>Destination</span>
           </div>
           <p className="text-sm font-bold text-slate-900">{shipment.destination?.name}</p>
-          <p className="text-slate-500">
-            {[shipment.destination?.city, shipment.destination?.country].filter(Boolean).join(', ')}
+          <p className="text-slate-600 font-medium">
+            {[
+              shipment.destination?.city,
+              shipment.destination?.state,
+              shipment.destination?.pincode ? `PIN: ${shipment.destination.pincode}` : '',
+              shipment.destination?.country
+            ].filter(Boolean).join(', ')}
           </p>
         </div>
 

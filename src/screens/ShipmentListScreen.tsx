@@ -3,8 +3,7 @@ import { api } from '../api/client.js';
 import { RiskBadge } from '../components/RiskBadge.js';
 import { SearchBar } from '../components/SearchBar.js';
 import { FilterBar, FilterState } from '../components/FilterBar.js';
-import { ShipmentForm, ShipmentFormData } from '../components/ShipmentForm.js';
-import { Plus, Edit2, Trash2, ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink, Loader2 } from 'lucide-react';
 
 interface ShipmentListScreenProps {
   onSelectShipment: (id: string) => void;
@@ -28,14 +27,6 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
     sortBy: 'riskScore',
     sortOrder: 'desc'
   });
-
-  // Modal form state
-  const [formOpen, setFormOpen] = useState(false);
-  const [editingShipment, setEditingShipment] = useState<any | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Delete confirmation state
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchList = async () => {
     try {
@@ -65,49 +56,6 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
     return () => clearTimeout(timer);
   }, [search, filters]);
 
-  const handleOpenCreate = () => {
-    setEditingShipment(null);
-    setFormOpen(true);
-  };
-
-  const handleOpenEdit = (shipment: any, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditingShipment(shipment);
-    setFormOpen(true);
-  };
-
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const confirmed = window.confirm('Are you sure you want to delete this shipment? This will remove all associated risk signals and predictions.');
-    if (!confirmed) return;
-
-    try {
-      setDeletingId(id);
-      await api.deleteShipment(id);
-      setShipments(prev => prev.filter(s => s.id !== id));
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete shipment');
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleFormSubmit = async (formData: ShipmentFormData) => {
-    setIsSubmitting(true);
-    try {
-      if (editingShipment && editingShipment.id) {
-        await api.updateShipment(editingShipment.id, formData);
-      } else {
-        await api.createShipment(formData);
-      }
-      setFormOpen(false);
-      setEditingShipment(null);
-      await fetchList();
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleResetFilters = () => {
     setSearch('');
     setFilters({
@@ -134,24 +82,16 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
 
   return (
     <div id="shipment-list-screen" className="space-y-4">
-      {/* Header & Primary Action */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div>
           <h1 id="shipment-registry-heading" className="text-xl font-bold text-slate-900">
             Shipment Registry
           </h1>
           <p className="text-xs text-slate-500">
-            CRUD operations, multi-factor filtering, search, and live risk scores.
+            Real-time risk scoring, SLA breach predictions, and multi-factor filtering.
           </p>
         </div>
-        <button
-          id="add-shipment-main-btn"
-          onClick={handleOpenCreate}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 text-white text-xs font-semibold rounded-md hover:bg-slate-800 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Shipment</span>
-        </button>
       </div>
 
       {/* Search & Filter Controls */}
@@ -187,7 +127,7 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
                 <th className="px-5 py-3">Risk Tier</th>
                 <th className="px-5 py-3">Committed SLA</th>
                 <th className="px-5 py-3">Est. Delay</th>
-                <th className="px-5 py-3 text-right">Actions</th>
+                <th className="px-5 py-3 text-right">Details</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -228,8 +168,16 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
                       {s.mode}
                     </td>
                     <td className="px-5 py-3.5 text-slate-600">
-                      <div className="font-medium text-slate-800">{s.origin?.city || s.origin?.name}</div>
-                      <div className="text-[11px] text-slate-400">to {s.destination?.city || s.destination?.name}</div>
+                      <div className="font-medium text-slate-800">
+                        {s.origin?.city || s.origin?.name}
+                        {s.origin?.state ? `, ${s.origin.state}` : ''}
+                        {s.origin?.pincode ? ` (${s.origin.pincode})` : ''}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        to {s.destination?.city || s.destination?.name}
+                        {s.destination?.state ? `, ${s.destination.state}` : ''}
+                        {s.destination?.pincode ? ` (${s.destination.pincode})` : ''}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5">
                       <span
@@ -258,37 +206,18 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <div className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          id={`view-detail-btn-${s.id}`}
-                          title="View Drill-Down Details"
-                          onClick={() => onSelectShipment(s.id)}
-                          className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-200 transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          id={`edit-shipment-btn-${s.id}`}
-                          title="Edit Shipment"
-                          onClick={(e) => handleOpenEdit(s, e)}
-                          className="p-1.5 text-slate-500 hover:text-slate-900 rounded hover:bg-slate-200 transition-colors"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          id={`delete-shipment-btn-${s.id}`}
-                          title="Delete Shipment"
-                          disabled={deletingId === s.id}
-                          onClick={(e) => handleDelete(s.id, e)}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
-                        >
-                          {deletingId === s.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-600" />
-                          ) : (
-                            <Trash2 className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
+                      <button
+                        id={`view-detail-btn-${s.id}`}
+                        title="Inspect Shipment Risk & SLA"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectShipment(s.id);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 hover:text-slate-900 rounded bg-slate-100 hover:bg-slate-200 transition-colors"
+                      >
+                        <span>Inspect</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -297,19 +226,6 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
           </table>
         </div>
       </div>
-
-      {/* Add / Edit Modal */}
-      {formOpen && (
-        <ShipmentForm
-          initialData={editingShipment}
-          onSubmit={handleFormSubmit}
-          onCancel={() => {
-            setFormOpen(false);
-            setEditingShipment(null);
-          }}
-          isSubmitting={isSubmitting}
-        />
-      )}
     </div>
   );
 };

@@ -46,27 +46,4 @@ export const api = {
   async getShipmentDetail(id) {
     return request(`/api/shipments/${encodeURIComponent(id)}`);
   },
-
-  // POST /api/shipments
-  async createShipment(shipmentData) {
-    return request('/api/shipments', {
-      method: 'POST',
-      body: JSON.stringify(shipmentData),
-    });
-  },
-
-  // PUT /api/shipments/:id
-  async updateShipment(id, shipmentData) {
-    return request(`/api/shipments/${encodeURIComponent(id)}`, {
-      method: 'PUT',
-      body: JSON.stringify(shipmentData),
-    });
-  },
-
-  // DELETE /api/shipments/:id
-  async deleteShipment(id) {
-    return request(`/api/shipments/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
-  },
 };
