@@ -1,0 +1,6 @@
+{
+  "name": "Shipment Risk Intelligence Platform",
+  "description": "AI-powered prototype for supply chain risk scoring, SLA breach prediction, and actionable recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
