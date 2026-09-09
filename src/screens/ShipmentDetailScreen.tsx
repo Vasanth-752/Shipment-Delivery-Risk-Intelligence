@@ -328,6 +328,34 @@ export const ShipmentDetailScreen: React.FC<ShipmentDetailScreenProps> = ({
           </div>
 
           <div className="p-5 space-y-5 flex-1">
+            {/* SLA Breach Status Banner */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">SLA Breach Assessment</span>
+                <span
+                  className={`inline-block mt-0.5 px-2.5 py-0.5 rounded text-xs font-bold ${
+                    prediction?.slaBreachStatus === 'Critical Breach Imminent'
+                      ? 'bg-rose-100 text-rose-800'
+                      : prediction?.slaBreachStatus === 'High Risk of Breach'
+                      ? 'bg-orange-100 text-orange-800'
+                      : prediction?.slaBreachStatus === 'Moderate SLA Risk'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {prediction?.slaBreachStatus || 'On Schedule'}
+                </span>
+              </div>
+              {prediction?.newlyEstimatedETA && (
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Newly Estimated ETA</span>
+                  <span className="font-mono text-xs font-bold text-slate-900">
+                    {formatDate(prediction.newlyEstimatedETA)}
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
@@ -343,13 +371,13 @@ export const ShipmentDetailScreen: React.FC<ShipmentDetailScreenProps> = ({
 
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
-                  Estimated Delay
+                  Newly Estimated Delay
                 </span>
                 <span className="text-3xl font-extrabold text-slate-900">
                   +{prediction?.estimatedDelayHours || 0}h
                 </span>
                 <span className="block text-[11px] text-slate-500 mt-1">
-                  Expected delivery variance
+                  Expected transit variance
                 </span>
               </div>
             </div>

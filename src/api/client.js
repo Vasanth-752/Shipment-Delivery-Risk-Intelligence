@@ -46,4 +46,24 @@ export const api = {
   async getShipmentDetail(id) {
     return request(`/api/shipments/${encodeURIComponent(id)}`);
   },
+
+  // POST /api/shipments/batch
+  async importShipments(shipments, mode = 'append') {
+    return request('/api/shipments/batch', {
+      method: 'POST',
+      body: JSON.stringify({ shipments, mode }),
+    });
+  },
+
+  // POST /api/shipments/reset
+  async resetShipments() {
+    return request('/api/shipments/reset', {
+      method: 'POST',
+    });
+  },
+
+  // GET /api/shipments/sample-data
+  async getSampleDataset() {
+    return request('/api/shipments/sample-data');
+  },
 };

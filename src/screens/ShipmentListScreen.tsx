@@ -3,7 +3,8 @@ import { api } from '../api/client.js';
 import { RiskBadge } from '../components/RiskBadge.js';
 import { SearchBar } from '../components/SearchBar.js';
 import { FilterBar, FilterState } from '../components/FilterBar.js';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { DatasetImportModal } from '../components/DatasetImportModal.js';
+import { ExternalLink, Loader2, FileSpreadsheet, RotateCcw } from 'lucide-react';
 
 interface ShipmentListScreenProps {
   onSelectShipment: (id: string) => void;
@@ -17,6 +18,7 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
   const [shipments, setShipments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Search & Filter state
   const [search, setSearch] = useState('');
@@ -67,6 +69,18 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
     });
   };
 
+  const handleResetBaseline = async () => {
+    try {
+      setLoading(true);
+      await api.resetShipments();
+      await fetchList();
+    } catch (err: any) {
+      setError(err.message || 'Failed to reset registry');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (isoStr: string) => {
     try {
       return new Date(isoStr).toLocaleDateString('en-US', {
@@ -89,8 +103,27 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
             Shipment Registry
           </h1>
           <p className="text-xs text-slate-500">
-            Real-time risk scoring, SLA breach predictions, and multi-factor filtering.
+            Real-time risk scoring, SLA breach predictions, and multi-factor filtering. ({shipments.length} active)
           </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            id="list-provide-dataset-btn"
+            onClick={() => setIsImportModalOpen(true)}
+            className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 shadow-xs"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-200" />
+            <span>Provide Dataset</span>
+          </button>
+          <button
+            id="list-reset-baseline-btn"
+            onClick={handleResetBaseline}
+            title="Reset to default baseline shipments"
+            className="px-2.5 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-semibold rounded-md hover:bg-slate-100 transition-colors flex items-center gap-1"
+          >
+            <RotateCcw className="w-3 h-3 text-slate-500" />
+            <span>Reset</span>
+          </button>
         </div>
       </div>
 
@@ -123,10 +156,10 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
                 <th className="px-5 py-3">Customer</th>
                 <th className="px-5 py-3">Mode</th>
                 <th className="px-5 py-3">Origin / Destination</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3">Risk Tier</th>
-                <th className="px-5 py-3">Committed SLA</th>
-                <th className="px-5 py-3">Est. Delay</th>
+                <th className="px-5 py-3">Risk Score</th>
+                <th className="px-5 py-3">SLA Breach Status</th>
+                <th className="px-5 py-3">Committed ETA</th>
+                <th className="px-5 py-3">Newly Est. Delay & ETA</th>
                 <th className="px-5 py-3 text-right">Details</th>
               </tr>
             </thead>
@@ -170,40 +203,43 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
                     <td className="px-5 py-3.5 text-slate-600">
                       <div className="font-medium text-slate-800">
                         {s.origin?.city || s.origin?.name}
-                        {s.origin?.state ? `, ${s.origin.state}` : ''}
-                        {s.origin?.pincode ? ` (${s.origin.pincode})` : ''}
                       </div>
                       <div className="text-[11px] text-slate-500">
                         to {s.destination?.city || s.destination?.name}
-                        {s.destination?.state ? `, ${s.destination.state}` : ''}
-                        {s.destination?.pincode ? ` (${s.destination.pincode})` : ''}
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-xs font-semibold capitalize ${
-                          s.status === 'delayed'
-                            ? 'bg-orange-100 text-orange-800'
-                            : s.status === 'breached'
-                            ? 'bg-rose-100 text-rose-800'
-                            : s.status === 'in_transit'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-slate-100 text-slate-700'
-                        }`}
-                      >
-                        {s.status.replace('_', ' ')}
-                      </span>
+                      <RiskBadge score={s.riskScore} tier={s.riskTier} />
                     </td>
                     <td className="px-5 py-3.5">
-                      <RiskBadge score={s.riskScore} tier={s.riskTier} />
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${
+                          s.slaBreachStatus === 'Critical Breach Imminent'
+                            ? 'bg-rose-100 text-rose-800'
+                            : s.slaBreachStatus === 'High Risk of Breach'
+                            ? 'bg-orange-100 text-orange-800'
+                            : s.slaBreachStatus === 'Moderate SLA Risk'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        {s.slaBreachStatus || 'On Schedule'}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5 font-mono text-slate-700">
                       {formatDate(s.committedETA)}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className={`font-semibold ${s.estimatedDelayHours > 0 ? 'text-rose-700' : 'text-slate-600'}`}>
-                        {s.estimatedDelayHours > 0 ? `+${s.estimatedDelayHours}h` : 'On track'}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className={`font-semibold ${s.estimatedDelayHours > 0 ? 'text-rose-700' : 'text-slate-600'}`}>
+                          {s.estimatedDelayHours > 0 ? `+${s.estimatedDelayHours}h` : 'On track (0h)'}
+                        </span>
+                        {s.newlyEstimatedETA && (
+                          <span className="text-slate-400 text-[10px] font-mono">
+                            ETA: {formatDate(s.newlyEstimatedETA)}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <button
@@ -226,6 +262,14 @@ export const ShipmentListScreen: React.FC<ShipmentListScreenProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Dataset Import Modal */}
+      <DatasetImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={() => fetchList()}
+      />
     </div>
   );
 };
+
